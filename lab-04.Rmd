@@ -1,7 +1,7 @@
 ---
 title: "Lab 04 - La Quinta is Spanish for next to Denny's, Pt. 1"
-author: "Insert your name here"
-date: "Insert date here"
+author: "Jamieson Nathan"
+date: "07/02/2025"
 output: github_document
 ---
 
@@ -18,34 +18,91 @@ states <- read_csv("data/states.csv")
 
 ### Exercise 1
 
-Remove this text, and add your answer for Exercise 1 here.
-Add code chunks as needed.
-Don't forget to label your code chunk.
-Do not use spaces in code chunk labels.
+```{r dataset-variables}
+
+dim(dennys) 
+head(dennys) 
+
+```
+Dimensions are 1643 X 6. Each row represents a specific Denny's location and the columns give the identifying information. 
 
 ### Exercise 2
 
-Remove this text, and add your answer for Exercise 2 here.
-Add code chunks as needed.
-Don't forget to label your code chunk.
-Do not use spaces in code chunk labels.
+```{r other-variables}
+
+dim(laquinta) 
+head(laquinta) 
+
+```
+
+909 X 6, each row represents the location of a Laquinta and the columns give the identifying information. 
 
 ### Exercise 3
 
-...
+Looking at the websites the data is scraped from, there appear to be numerous overseas locations for both chains (including Asia, Africa, and Europe). 
 
 ### Exercise 4
 
-...
+Filtering both datasets by states seems like the best move.Lets have a look at the states dataset to doublecheck it has abbreviations:
+
+```{r some-other-variables}
+
+dim(states) 
+head(states) 
+
+```
 
 ### Exercise 5
 
-...
+```{r filter-variables}
+
+dennys %>%
+  filter(!(state %in% states$abbreviation))
+
+```
+
+There appear to be no Denny's outside of the US (based on this data scrape).
+
 
 ### Exercise 6
 
-...
+```{r new-variable}
 
+dennys %>%
+  mutate(dn_country = "United States")
+
+```
  
-Add exercise headings as needed.
+### Exercise 7
+
+```{r laquinta-variables}
+
+laquinta %>%
+  filter(!(state %in% states$abbreviation))
+
+```
+
+### Exercise 8
+
+```{r laquinta-country-variables}
+
+laquinta %>%
+  mutate(country = case_when(
+    state %in% state.abb ~ "United States",
+    state %in% c("ON", "BC") ~ "Canada",
+    state == "ANT" ~ "Colombia",
+    state %in% c("AG", "QR", "CH", "NL", "VE", "PU", "SL") ~ "Mexico", 
+    state == "FM" ~ "Honduras"
+  ))
+
+laquinta <- laquinta %>%
+  filter(country == "United States")
+
+```
+
+```{r filter-for-USA}
+
+
+```
+
 
