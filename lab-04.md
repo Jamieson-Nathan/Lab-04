@@ -8,7 +8,6 @@ Jamieson Nathan
 ``` r
 library(tidyverse) 
 library(dsbox) 
-library(dplyr)
 ```
 
 ``` r
@@ -113,24 +112,9 @@ scrape).
 ### Exercise 6
 
 ``` r
-dennys %>%
-  mutate(country = "United States")
+dennys <- dennys %>%
+  mutate(dn_country = "United States")
 ```
-
-    ## # A tibble: 1,643 × 7
-    ##    address                        city    state zip   longitude latitude country
-    ##    <chr>                          <chr>   <chr> <chr>     <dbl>    <dbl> <chr>  
-    ##  1 2900 Denali                    Anchor… AK    99503    -150.      61.2 United…
-    ##  2 3850 Debarr Road               Anchor… AK    99508    -150.      61.2 United…
-    ##  3 1929 Airport Way               Fairba… AK    99701    -148.      64.8 United…
-    ##  4 230 Connector Dr               Auburn  AL    36849     -85.5     32.6 United…
-    ##  5 224 Daniel Payne Drive N       Birmin… AL    35207     -86.8     33.6 United…
-    ##  6 900 16th St S, Commons on Gree Birmin… AL    35294     -86.8     33.5 United…
-    ##  7 5931 Alabama Highway, #157     Cullman AL    35056     -86.9     34.2 United…
-    ##  8 2190 Ross Clark Circle         Dothan  AL    36301     -85.4     31.2 United…
-    ##  9 900 Tyson Rd                   Hope H… AL    36043     -86.4     32.2 United…
-    ## 10 4874 University Drive          Huntsv… AL    35816     -86.7     34.7 United…
-    ## # ℹ 1,633 more rows
 
 ### Exercise 7
 
@@ -160,32 +144,218 @@ laquinta %>%
 ### Exercise 8
 
 ``` r
-laquinta %>%
+laquinta <- laquinta %>%
   mutate(country = case_when(
-    state %in% state.abb ~ "United States",
+    state %in% state.abb ~ "United States",  # Ensure 'state.abb' is defined or replace it with appropriate state codes.
     state %in% c("ON", "BC") ~ "Canada",
     state == "ANT" ~ "Colombia",
     state %in% c("AG", "QR", "CH", "NL", "VE", "PU", "SL") ~ "Mexico", 
     state == "FM" ~ "Honduras"
-  ))
+  )) %>%
+  filter(country == "United States")
 ```
 
-    ## # A tibble: 909 × 7
-    ##    address                          city  state zip   longitude latitude country
-    ##    <chr>                            <chr> <chr> <chr>     <dbl>    <dbl> <chr>  
-    ##  1 793 W. Bel Air Avenue            "\nA… MD    21001     -76.2     39.5 United…
-    ##  2 3018 CatClaw Dr                  "\nA… TX    79606     -99.8     32.4 United…
-    ##  3 3501 West Lake Rd                "\nA… TX    79601     -99.7     32.5 United…
-    ##  4 184 North Point Way              "\nA… GA    30102     -84.7     34.1 United…
-    ##  5 2828 East Arlington Street       "\nA… OK    74820     -96.6     34.8 United…
-    ##  6 14925 Landmark Blvd              "\nA… TX    75254     -96.8     33.0 United…
-    ##  7 Carretera Panamericana Sur KM 12 "\nA… AG    20345    -102.      21.8 Mexico 
-    ##  8 909 East Frontage Rd             "\nA… TX    78516     -98.1     26.2 United…
-    ##  9 2116 Yale Blvd Southeast         "\nA… NM    87106    -107.      35.1 United…
-    ## 10 7439 Pan American Fwy Northeast  "\nA… NM    87109    -107.      35.2 United…
-    ## # ℹ 899 more rows
+# Exercise 9
 
 ``` r
-#laquinta <- laquinta %>%
- # filter(country == "United States")
+dennys_count <- dennys %>%
+  count(state) %>%
+  inner_join(states, by = c("state" = "abbreviation"))
+
+laquinta_count <- laquinta %>%
+  count(state) %>%
+  inner_join(states, by = c("state" = "abbreviation"))
 ```
+
+``` r
+dennys_most <- filter(dennys_count, n == max(n))
+dennys_fewest <- filter(dennys_count, n == min(n))
+
+laquinta_most <- filter(laquinta_count, n == max(n))
+laquinta_fewest <- filter(laquinta_count, n == min(n))
+
+print(dennys_most)
+```
+
+    ## # A tibble: 1 × 4
+    ##   state     n name          area
+    ##   <chr> <int> <chr>        <dbl>
+    ## 1 CA      403 California 163695.
+
+``` r
+print(dennys_fewest)
+```
+
+    ## # A tibble: 1 × 4
+    ##   state     n name      area
+    ##   <chr> <int> <chr>    <dbl>
+    ## 1 DE        1 Delaware 2489.
+
+``` r
+print(laquinta_most)
+```
+
+    ## # A tibble: 1 × 4
+    ##   state     n name     area
+    ##   <chr> <int> <chr>   <dbl>
+    ## 1 TX      237 Texas 268596.
+
+``` r
+print(laquinta_fewest)
+```
+
+    ## # A tibble: 1 × 4
+    ##   state     n name    area
+    ##   <chr> <int> <chr>  <dbl>
+    ## 1 ME        1 Maine 35380.
+
+Cali/Delaware have the most/fewest Denny’s locations respectively,
+whereas, Texas/Maine have the same for Laquinta. Not too surprising,
+given Ca And Tx are typically the most popular states and the other two
+are much less populated.
+
+# Exercise 10
+
+``` r
+dennys_density <- dennys %>%
+  count(state) %>%
+  inner_join(states, by = c("state" = "abbreviation")) %>%
+  mutate(density_per_thousand_sq_mi = n / (area / 1000))  
+
+dennys_most_dense <- dennys_density %>%
+  arrange(desc(density_per_thousand_sq_mi)) %>%
+  slice(1)
+
+dennys_least_dense <- dennys_density %>%
+  arrange(density_per_thousand_sq_mi) %>%
+  slice(1)
+
+laquinta_density <- laquinta %>%
+  count(state) %>%
+  inner_join(states, by = c("state" = "abbreviation")) %>%
+  mutate(density_per_thousand_sq_mi = n / (area / 1000))  
+
+laquinta_most_dense <- laquinta_density %>%
+  arrange(desc(density_per_thousand_sq_mi)) %>%
+  slice(1)
+
+laquinta_least_dense <- laquinta_density %>%
+  arrange(density_per_thousand_sq_mi) %>%
+  slice(1)
+
+print(dennys_most_dense)
+```
+
+    ## # A tibble: 1 × 5
+    ##   state     n name                  area density_per_thousand_sq_mi
+    ##   <chr> <int> <chr>                <dbl>                      <dbl>
+    ## 1 DC        2 District of Columbia  68.3                       29.3
+
+``` r
+print(dennys_least_dense)
+```
+
+    ## # A tibble: 1 × 5
+    ##   state     n name      area density_per_thousand_sq_mi
+    ##   <chr> <int> <chr>    <dbl>                      <dbl>
+    ## 1 AK        3 Alaska 665384.                    0.00451
+
+``` r
+print(laquinta_most_dense)
+```
+
+    ## # A tibble: 1 × 5
+    ##   state     n name          area density_per_thousand_sq_mi
+    ##   <chr> <int> <chr>        <dbl>                      <dbl>
+    ## 1 RI        2 Rhode Island 1545.                       1.29
+
+``` r
+print(laquinta_least_dense)
+```
+
+    ## # A tibble: 1 × 5
+    ##   state     n name      area density_per_thousand_sq_mi
+    ##   <chr> <int> <chr>    <dbl>                      <dbl>
+    ## 1 AK        2 Alaska 665384.                    0.00301
+
+This makes sense, as DC and RI are incredible dense states, so it tracks
+that it is the highest and Alaska is the least for both
+
+``` r
+dn <- dennys %>%
+  mutate(establishment = "Denny's")
+lq <- laquinta %>%
+  mutate(establishment = "La Quinta")
+
+dn_lq <- bind_rows(dn, lq)
+```
+
+``` r
+usa_locations_plot <- ggplot(dn_lq, aes(
+  x = longitude,
+  y = latitude,
+  color = establishment
+)) +
+  geom_point(alpha = 0.5, size = 2) +  
+  labs(title = "Denny's and La Quinta Locations Across the USA",
+       x = "Longitude",
+       y = "Latitude",
+       color = "Establishment Type") +
+  theme_minimal() +
+  theme(legend.position = "bottom")  
+print(usa_locations_plot)
+```
+
+![](lab-04_files/figure-gfm/plot-1.png)<!-- --> \# Exercise 11
+
+``` r
+nc_locations <- dn_lq %>%
+  filter(state == "NC")
+
+nc_locations_plot <- ggplot(nc_locations, aes(
+  x = longitude,
+  y = latitude,
+  color = establishment
+)) +
+  geom_point(alpha = 0.4, size = 3) +  
+  labs(title = "Denny's and La Quinta Locations in North Carolina",
+       x = "Longitude",
+       y = "Latitude",
+       color = "Establishment Type") +
+  theme_minimal() +
+  theme(legend.position = "bottom")  
+
+print(nc_locations_plot)
+```
+
+![](lab-04_files/figure-gfm/NC-1.png)<!-- -->
+
+Partially, but there are enough standalones to see some variability in
+the joke. Although it does seem that where there is a La Quinta, there
+is a Dennys’ for the most part.
+
+# Exercise 11
+
+``` r
+tx_locations <- dn_lq %>%
+  filter(state == "TX")
+
+tx_locations_plot <- ggplot(tx_locations, aes(
+  x = longitude,
+  y = latitude,
+  color = establishment
+)) +
+  geom_point(alpha = 0.3, size = 2) +  
+  labs(title = "Denny's and La Quinta Locations in Texas",
+       x = "Longitude",
+       y = "Latitude",
+       color = "Establishment Type") +
+  theme_minimal() +
+  theme(legend.position = "bottom")  
+
+print(tx_locations_plot)
+```
+
+![](lab-04_files/figure-gfm/TX-1.png)<!-- --> Now he seems to be pretty
+spot on! It is almost uncanny how close these two chains follow each
+other here. He must be bilingual.

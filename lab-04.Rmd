@@ -68,7 +68,7 @@ There appear to be no Denny's outside of the US (based on this data scrape).
 
 ```{r new-variable}
 
-dennys %>%
+dennys <- dennys %>%
   mutate(dn_country = "United States")
 
 ```
@@ -86,23 +86,165 @@ laquinta %>%
 
 ```{r laquinta-country-variables}
 
-laquinta %>%
+laquinta <- laquinta %>%
   mutate(country = case_when(
-    state %in% state.abb ~ "United States",
+    state %in% state.abb ~ "United States",  # Ensure 'state.abb' is defined or replace it with appropriate state codes.
     state %in% c("ON", "BC") ~ "Canada",
     state == "ANT" ~ "Colombia",
     state %in% c("AG", "QR", "CH", "NL", "VE", "PU", "SL") ~ "Mexico", 
     state == "FM" ~ "Honduras"
-  ))
-
-laquinta <- laquinta %>%
+  )) %>%
   filter(country == "United States")
 
 ```
 
-```{r filter-for-USA}
+# Exercise 9
+
+```{r frequency}
+
+dennys_count <- dennys %>%
+  count(state) %>%
+  inner_join(states, by = c("state" = "abbreviation"))
+
+laquinta_count <- laquinta %>%
+  count(state) %>%
+  inner_join(states, by = c("state" = "abbreviation"))
+
+```
+
+```{r more-frequency}
+
+dennys_most <- filter(dennys_count, n == max(n))
+dennys_fewest <- filter(dennys_count, n == min(n))
+
+laquinta_most <- filter(laquinta_count, n == max(n))
+laquinta_fewest <- filter(laquinta_count, n == min(n))
+
+print(dennys_most)
+print(dennys_fewest)
+print(laquinta_most)
+print(laquinta_fewest)
+
+```
+
+Cali/Delaware have the most/fewest Denny's locations respectively, whereas, Texas/Maine have the same for Laquinta. Not too surprising, given Ca And Tx are typically the most popular states and the other two are much less populated. 
+
+# Exercise 10
+
+```{r density}
+
+dennys_density <- dennys %>%
+  count(state) %>%
+  inner_join(states, by = c("state" = "abbreviation")) %>%
+  mutate(density_per_thousand_sq_mi = n / (area / 1000))  
+
+dennys_most_dense <- dennys_density %>%
+  arrange(desc(density_per_thousand_sq_mi)) %>%
+  slice(1)
+
+dennys_least_dense <- dennys_density %>%
+  arrange(density_per_thousand_sq_mi) %>%
+  slice(1)
+
+laquinta_density <- laquinta %>%
+  count(state) %>%
+  inner_join(states, by = c("state" = "abbreviation")) %>%
+  mutate(density_per_thousand_sq_mi = n / (area / 1000))  
+
+laquinta_most_dense <- laquinta_density %>%
+  arrange(desc(density_per_thousand_sq_mi)) %>%
+  slice(1)
+
+laquinta_least_dense <- laquinta_density %>%
+  arrange(density_per_thousand_sq_mi) %>%
+  slice(1)
+
+print(dennys_most_dense)
+print(dennys_least_dense)
+print(laquinta_most_dense)
+print(laquinta_least_dense)
+
+```
+This makes sense, as DC and RI are incredible dense states, so it tracks that it is the highest and Alaska is the least for both
+
+```{r combining}
+
+dn <- dennys %>%
+  mutate(establishment = "Denny's")
+lq <- laquinta %>%
+  mutate(establishment = "La Quinta")
+
+dn_lq <- bind_rows(dn, lq)
 
 
 ```
 
+```{r plot}
 
+usa_locations_plot <- ggplot(dn_lq, aes(
+  x = longitude,
+  y = latitude,
+  color = establishment
+)) +
+  geom_point(alpha = 0.5, size = 2) +  
+  labs(title = "Denny's and La Quinta Locations Across the USA",
+       x = "Longitude",
+       y = "Latitude",
+       color = "Establishment Type") +
+  theme_minimal() +
+  theme(legend.position = "bottom")  
+print(usa_locations_plot)
+
+```
+# Exercise 11
+
+```{r NC}
+
+nc_locations <- dn_lq %>%
+  filter(state == "NC")
+
+nc_locations_plot <- ggplot(nc_locations, aes(
+  x = longitude,
+  y = latitude,
+  color = establishment
+)) +
+  geom_point(alpha = 0.4, size = 3) +  
+  labs(title = "Denny's and La Quinta Locations in North Carolina",
+       x = "Longitude",
+       y = "Latitude",
+       color = "Establishment Type") +
+  theme_minimal() +
+  theme(legend.position = "bottom")  
+
+print(nc_locations_plot)
+
+```
+
+Partially, but there are enough stand alones to see some variability in the joke. Although it does seem that where there is a La Quinta, there is a Dennys' for the most part. 
+
+
+# Exercise 11
+
+```{r TX}
+
+tx_locations <- dn_lq %>%
+  filter(state == "TX")
+
+tx_locations_plot <- ggplot(tx_locations, aes(
+  x = longitude,
+  y = latitude,
+  color = establishment
+)) +
+  geom_point(alpha = 0.3, size = 2) +  
+  labs(title = "Denny's and La Quinta Locations in Texas",
+       x = "Longitude",
+       y = "Latitude",
+       color = "Establishment Type") +
+  theme_minimal() +
+  theme(legend.position = "bottom")  
+
+print(tx_locations_plot)
+
+```
+
+Now he seems to be pretty spot on! It is almost uncanny how close these two chains follow each other here. He must be bilingual. 
